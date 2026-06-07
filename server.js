@@ -1,20 +1,23 @@
 const express = require('express');
-const cors = require('cors');
-
+ 
 const app = express();
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type']
-}));
+ 
+// Manual CORS headers to allow all origins
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+ 
 app.use(express.json());
-
+ 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-
+ 
 app.post('/chat', async (req, res) => {
   try {
     const { messages, system } = req.body;
-
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -29,7 +32,6 @@ app.post('/chat', async (req, res) => {
         messages
       })
     });
-
     const data = await response.json();
     res.json(data);
   } catch (err) {
@@ -37,8 +39,9 @@ app.post('/chat', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
+ 
 app.get('/', (req, res) => res.send('Chatbot API server running.'));
-
+ 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
